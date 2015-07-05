@@ -1,0 +1,18 @@
+[mailgun]
+apikey = "key-xxxxxxx"
+domain = "somedomain"
+from = "Perk Checker <some@where.com>"
+to = "some@where.com"
+
+[accounts]
+  [accounts.acct1]
+  cookie = "xxxxx"
+  ua = ""
+
+  [accounts.acct2]
+  cookie = "xxxxx"
+  ua = ""
+
+  [accounts.acct3]
+  cookie = "xxxxx"
+  ua = ""
