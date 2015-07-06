@@ -59,6 +59,8 @@ function main() {
 
   program.parse(process.argv)
 
+  allsummary += moment().format('YYYY-MM-DD HH:mm:ss')
+  allsummary += ' (' + (new Date).getTime() + ')\n\n'
   var acctNames = Object.keys(config.accounts)
   async.eachSeries(acctNames, function(acctName, callback) {
       var acct = config.accounts[acctName]
