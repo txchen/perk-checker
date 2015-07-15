@@ -35,7 +35,7 @@ function getConfig(configFile) {
 }
 
 function getBalance(acctName, cookie, ua, asyncCallback) {
-  superagent.get('http://perk.com/perk/account')
+  superagent.get('http://perk.com/account')
     .set('Cookie', cookie)
     .set('User-Agent', ua)
     .end(function(err, res) {
@@ -43,8 +43,9 @@ function getBalance(acctName, cookie, ua, asyncCallback) {
         allsummary += acctName + ': failed to get account info' + err + '\n\n'
       } else {
         var $ = cheerio.load(res.text);
-        var lifeTimeBalance = $('#wrapper > section > div > div.account-settings > div > p.lifebal > strong').text()
-        var currentBalance = $('#wrapper > section > div > div.account-points > div.balance.points > strong').text()
+        // var lifeTimeBalance = $('#points_list > ul > li:nth-child(1) > span.total_points').text()
+        var lifeTimeBalance = 'currently unavailable on web page'
+        var currentBalance = $('#points_list > ul > li:nth-child(1) > span.total_points').text()
         allsummary += acctName + ': ' + currentBalance + ' / ' + lifeTimeBalance + '\n\n'
       }
       asyncCallback()
