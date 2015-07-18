@@ -43,8 +43,7 @@ function getBalance(acctName, cookie, ua, asyncCallback) {
         allsummary += acctName + ': failed to get account info' + err + '\n\n'
       } else {
         var $ = cheerio.load(res.text);
-        // var lifeTimeBalance = $('#points_list > ul > li:nth-child(1) > span.total_points').text()
-        var lifeTimeBalance = 'currently unavailable on web page'
+        var lifeTimeBalance = $('#tokens-list > ul.lifetime > li:nth-child(2) > span').text()
         var currentBalance = $('#points_list > ul > li:nth-child(1) > span.total_points').text()
         allsummary += acctName + ': ' + currentBalance + ' / ' + lifeTimeBalance + '\n\n'
       }
