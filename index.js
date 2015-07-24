@@ -59,8 +59,10 @@ function main() {
 
   program.parse(process.argv)
 
+  // TODO: read last check result and compare
   allsummary += moment().format('YYYY-MM-DD HH:mm:ss')
   allsummary += ' (' + (new Date).getTime() + ')\n\n'
+  // TODO: save json result to a file
   var acctNames = Object.keys(config.accounts)
   async.eachSeries(acctNames, function(acctName, callback) {
       var acct = config.accounts[acctName]
