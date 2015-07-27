@@ -7,7 +7,6 @@ var superagent = require('superagent')
 var cheerio = require('cheerio')
 var async = require('async')
 
-var allsummary = ''
 var config = {}
 
 function sendMail(subject, text) {
@@ -34,18 +33,19 @@ function getConfig(configFile) {
   }
 }
 
-function getBalance(acctName, cookie, ua, asyncCallback) {
+function getBalance(acctName, cookie, ua, acctResult, asyncCallback) {
   superagent.get('http://perk.com/account')
     .set('Cookie', cookie)
     .set('User-Agent', ua)
     .end(function(err, res) {
       if (err) {
-        allsummary += acctName + ': failed to get account info' + err + '\n\n'
+        acctResult.err = 'failed to get account info' + err
       } else {
         var $ = cheerio.load(res.text);
         var lifeTimeBalance = $('#tokens-list > ul.lifetime > li:nth-child(2) > span').text()
         var currentBalance = $('#points_list > ul > li:nth-child(1) > span.total_points').text()
-        allsummary += acctName + ': ' + currentBalance + ' / ' + lifeTimeBalance + '\n\n'
+        acctResult.balance = parseInt(currentBalance.replace(/,/g, ""))
+        acctResult.totalBalance = parseInt(lifeTimeBalance.replace(/,/g, ""))
       }
       asyncCallback()
     })
@@ -59,16 +59,43 @@ function main() {
 
   program.parse(process.argv)
 
-  // TODO: read last check result and compare
-  allsummary += moment().format('YYYY-MM-DD HH:mm:ss')
-  allsummary += ' (' + (new Date).getTime() + ')\n\n'
-  // TODO: save json result to a file
+  var result = { timestamp: (new Date).getTime(), accounts: {} }
+
   var acctNames = Object.keys(config.accounts)
   async.eachSeries(acctNames, function(acctName, callback) {
       var acct = config.accounts[acctName]
-      getBalance(acctName, acct.cookie, acct.ua, callback)
+      result.accounts[acctName] = {}
+      getBalance(acctName, acct.cookie, acct.ua, result.accounts[acctName], callback)
     },
     function done() {
+      try {
+        var lastResult = JSON.parse(fs.readFileSync('logs/last_perk_check.log'))
+      } catch (err) {
+        console.log('failed to read last result from last_perk_check.log')
+      }
+      // save result to logs/perk_history.log and logs/last_perk_check.log
+      fs.writeFileSync('logs/last_perk_check.log', JSON.stringify(result))
+      fs.appendFileSync('logs/perk_history.log', JSON.stringify(result) + '\n')
+      allsummary = moment().format('YYYY-MM-DD HH:mm:ss') + '\n\n'
+      for (var account in result.accounts) {
+        allsummary += account + ': ' + result.accounts[account].balance + ' / ' + result.accounts[account].totalBalance
+        if (lastResult && lastResult.accounts[account]) {
+          allsummary += ' ('
+          var pointsEarned = result.accounts[account].totalBalance - lastResult.accounts[account].totalBalance
+          var duration = result.timestamp - lastResult.timestamp
+          allsummary += ' got ' + pointsEarned + ' points in last ' + (duration / 3600000.0).toFixed(3) + ' hours. '
+          allsummary += 'DailyRate: ' + (24 * 3600000 * pointsEarned / duration).toFixed(2)
+          allsummary += ' )'
+        }
+        allsummary += '\n\n'
+      }
+      allsummary += '------------- json result -------------\n'
+      allsummary += JSON.stringify(result, null, 2)
+      if (lastResult) {
+        allsummary += '\n\n------------- last check json result -------------\n'
+        allsummary += JSON.stringify(lastResult, null, 2)
+      }
+
       console.log(allsummary)
       if (!program.noemail) {
         sendMail('Perk Status: ' + moment().format('YYYYMMDD-HHmmss'), allsummary)
