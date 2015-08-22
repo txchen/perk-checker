@@ -41,7 +41,7 @@ function getBalance(acctName, cookie, ua, acctResult, asyncCallback) {
       if (err) {
         acctResult.err = 'failed to get account info' + err
       } else {
-        var $ = cheerio.load(res.text);
+        var $ = cheerio.load(res.text)
         var lifeTimeBalance = $('#tokens-list > ul.lifetime > li:nth-child(2) > span').text()
         var currentBalance = $('#points_list > ul > li:nth-child(1) > span.total_points').text()
         acctResult.balance = parseInt(currentBalance.replace(/,/g, ""))
